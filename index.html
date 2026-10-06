@@ -160,7 +160,7 @@ Escríbeme al 987 642 958
 </div>
 </section>
  
-<footer style="background: #12161C; color: #A9A59C">
+<footer style="background: #12161C; color: #A9A59C; padding-bottom: 80px">
 <div style="max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; font-size: 0.9rem">
 <span>© 2026 Soluciones IA Andree</span>
 <span>WhatsApp y llamadas: 987 642 958</span>
@@ -168,5 +168,191 @@ Escríbeme al 987 642 958
 </footer>
  
 </div>
+ 
+<!-- ================= CHATBOT ================= -->
+<style>
+#cb-btn{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;align-items:center;gap:.6rem;min-height:56px;padding:0 1.3rem 0 1rem;border:0;border-radius:999px;background:#12161C;color:#fff;font:600 1rem 'Instrument Sans',system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(18,22,28,.28)}
+#cb-btn .dot{width:34px;height:34px;border-radius:50%;background:#7FE0C2;display:flex;align-items:center;justify-content:center}
+#cb-btn:focus-visible,#cb button:focus-visible,#cb input:focus-visible{outline:3px solid #7FE0C2;outline-offset:2px}
+#cb{position:fixed;right:20px;bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:51;width:min(390px,calc(100vw - 24px));height:min(600px,calc(100vh - 120px));display:none;flex-direction:column;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(18,22,28,.3);font-family:'Instrument Sans',system-ui,sans-serif;color:#12161C}
+#cb.open{display:flex}
+@media (max-width:480px){#cb{right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
+#cb header{background:#12161C;color:#F3F1EC;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+#cb header b{font-family:'Bricolage Grotesque',Georgia,serif;font-size:1.05rem;display:block}
+#cb header small{color:#A9A59C;font-size:.8rem}
+#cb-close{background:transparent;border:0;color:#F3F1EC;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:1.4rem;line-height:1}
+#cb-log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#F3F1EC}
+.cb-m{max-width:86%;padding:10px 13px;border-radius:14px;font-size:.95rem;line-height:1.5;white-space:pre-line}
+.cb-bot{align-self:flex-start;background:#fff;border:1px solid #E2DED5;border-bottom-left-radius:4px}
+.cb-user{align-self:flex-end;background:#12161C;color:#fff;border-bottom-right-radius:4px}
+.cb-chips{display:flex;flex-wrap:wrap;gap:6px}
+.cb-chip{border:1.5px solid #0B5D4B;background:#fff;color:#0B5D4B;border-radius:999px;padding:7px 12px;font:500 .85rem 'Instrument Sans',sans-serif;cursor:pointer;text-align:left}
+.cb-chip.main{background:#0B5D4B;color:#fff}
+.cb-wa{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:999px;background:#1A7F45;color:#fff!important;text-decoration:none;font-weight:600;font-size:.95rem}
+#cb form{display:flex;gap:8px;padding:10px;border-top:1px solid #E2DED5;background:#fff}
+#cb input{flex:1;min-height:44px;border:1px solid #CFCAC0;border-radius:999px;padding:0 14px;font:inherit;font-size:.95rem}
+#cb form button{min-width:44px;min-height:44px;border:0;border-radius:50%;background:#12161C;color:#fff;cursor:pointer}
+</style>
+ 
+<button id="cb-btn" aria-controls="cb" aria-expanded="false">
+  <span class="dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#12161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg></span>
+  ¿Tienes preguntas?
+</button>
+ 
+<section id="cb" role="dialog" aria-label="Asistente de Soluciones IA Andree">
+  <header>
+    <div><b>Asistente Soluciones IA</b><small>Respuestas al instante</small></div>
+    <button id="cb-close" aria-label="Cerrar chat">×</button>
+  </header>
+  <div id="cb-log" aria-live="polite"></div>
+  <form id="cb-form" autocomplete="on">
+    <input id="cb-in" placeholder="Escribe tu pregunta…" aria-label="Escribe tu mensaje">
+    <button type="submit" aria-label="Enviar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+  </form>
+</section>
+ 
+<script>
+(function(){
+  // ===== CONFIGURACIÓN =====
+  const WHATSAPP = '51987642958';
+  const CORREO   = 'jorge.floresc@unmsm.edu.pe';
+ 
+  // ===== 10 PREGUNTAS BÁSICAS =====
+  const FAQ = [
+    {q:'¿En qué consiste la asesoría?', k:['consiste','que es','asesoria','servicio','haces','ofreces'],
+     a:'Evalúo la situación actual de tu organización y te propongo qué bots, agentes inteligentes y automatizaciones con IA conviene desarrollar, con prioridades claras.'},
+    {q:'¿Cuánto cuesta?', k:['cuesta','precio','costo','cuanto','valor','tarifa','pagar'],
+     a:'La asesoría tiene un costo único de $250 (USD).'},
+    {q:'¿Qué incluye?', k:['incluye','entregable','recibo','obtengo'],
+     a:'Incluye:\n• Diagnóstico de la situación actual\n• Procesos con mayor potencial de automatización\n• Propuesta de bots, agentes y automatizaciones con IA\n• Hoja de ruta con prioridades para implementar'},
+    {q:'¿Cómo es el proceso?', k:['proceso','pasos','etapas','como trabajas','metodologia','funciona'],
+     a:'Son 4 pasos:\n1. Conversación inicial sobre tus objetivos\n2. Evaluación de tus procesos\n3. Propuesta con IA\n4. Hoja de ruta con los siguientes pasos'},
+    {q:'¿Qué es un bot conversacional?', k:['bot','chatbot','conversacional'],
+     a:'Es un asistente que responde automáticamente a clientes, colaboradores o proveedores por WhatsApp, web u otros canales, las 24 horas.'},
+    {q:'¿Qué es un agente inteligente?', k:['agente','inteligente'],
+     a:'Es un asistente con IA que puede analizar documentos, preparar reportes, consultar tus sistemas y apoyar decisiones del equipo.'},
+    {q:'¿Qué procesos se pueden automatizar?', k:['automatizar','automatizacion','tareas','procesos','repetitivas'],
+     a:'Tareas repetitivas como registros, aprobaciones, seguimientos, envío de correos y reportes, o mover datos entre hojas de cálculo y sistemas.'},
+    {q:'¿Para qué organizaciones es?', k:['para quien','empresa','organizacion','pyme','tipo','negocio'],
+     a:'Para organizaciones y áreas que quieren usar IA con un plan y no saben por dónde empezar ni qué conviene desarrollar primero.'},
+    {q:'¿Necesito conocimientos técnicos?', k:['conocimiento','tecnico','saber','programar','experiencia'],
+     a:'No. Te explico todo en lenguaje sencillo; solo necesitas conocer cómo trabaja tu organización.'},
+    {q:'¿La asesoría incluye el desarrollo?', k:['desarrollo','implementar','implementacion','construir','incluye el'],
+     a:'La asesoría cubre la evaluación y la propuesta. El desarrollo de los bots y automatizaciones se cotiza aparte, según lo que se defina en la propuesta.'}
+  ];
+ 
+  const $ = id => document.getElementById(id);
+  const log = $('cb-log'), input = $('cb-in');
+  const vistas = [];
+  let modo = 'faq', lead = {}, iniciado = false;
+ 
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[¿?¡!.,]/g,' ');
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ 
+  function msg(text, who){
+    const d = document.createElement('div');
+    d.className = 'cb-m ' + (who==='user' ? 'cb-user' : 'cb-bot');
+    d.textContent = text; log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+  }
+  function chips(list){
+    const w = document.createElement('div'); w.className='cb-chips';
+    list.forEach(([label, fn, main])=>{
+      const b=document.createElement('button'); b.type='button'; b.className='cb-chip'+(main?' main':'');
+      b.textContent=label; b.onclick=()=>{msg(label,'user'); fn();}; w.appendChild(b);
+    });
+    log.appendChild(w); log.scrollTop = log.scrollHeight;
+  }
+  function menu(){
+    chips(FAQ.map(f=>[f.q, ()=>responder(f)]).concat([['Quiero que me contacten', iniciarLead, true]]));
+  }
+  function responder(f){
+    if(!vistas.includes(f.q)) vistas.push(f.q);
+    setTimeout(()=>{ msg(f.a); chips([['Quiero que me contacten', iniciarLead, true],['Ver otras preguntas', menu]]); }, 250);
+  }
+  function buscar(texto){
+    const t = ' '+norm(texto)+' ';
+    let mejor=null, puntos=0;
+    FAQ.forEach(f=>{ const p=f.k.filter(k=>t.includes(norm(k))).length; if(p>puntos){puntos=p; mejor=f;} });
+    return mejor;
+  }
+ 
+  // ===== Captura de datos =====
+  const PASOS = [
+    {campo:'nombre', pregunta:'¡Genial! ¿Cuál es tu nombre?'},
+    {campo:'organizacion', pregunta:'¿En qué organización o empresa trabajas?'},
+    {campo:'contacto', pregunta:'¿A qué correo o celular te puedo contactar?'},
+    {campo:'consulta', pregunta:'Cuéntame brevemente qué te gustaría mejorar o automatizar.'}
+  ];
+  let paso = 0;
+  function iniciarLead(){ modo='lead'; paso=0; lead={}; setTimeout(()=>msg(PASOS[0].pregunta),250); input.focus(); }
+  function siguientePaso(texto){
+    const p = PASOS[paso];
+    if(p.campo==='contacto' && !/@/.test(texto) && texto.replace(/\D/g,'').length<9){
+      msg('Ese dato no parece un correo ni un celular. ¿Me lo escribes de nuevo?'); return;
+    }
+    lead[p.campo]=texto; paso++;
+    if(paso<PASOS.length){ setTimeout(()=>msg(PASOS[paso].pregunta),250); }
+    else { enviar(); }
+  }
+  function resumen(){
+    return 'Nuevo contacto — Soluciones IA Andree\n'+
+      'Nombre: '+lead.nombre+'\nOrganización: '+lead.organizacion+'\nContacto: '+lead.contacto+
+      '\nConsulta: '+lead.consulta+(vistas.length?'\nPreguntas vistas: '+vistas.join(' | '):'');
+  }
+  function enviar(){
+    modo='faq';
+    const estado = msg('Enviando tus datos…');
+    fetch('https://formsubmit.co/ajax/'+CORREO, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify({
+        _subject:'Nuevo contacto desde la landing — '+lead.nombre,
+        _template:'table', _captcha:'false',
+        Nombre:lead.nombre, Organizacion:lead.organizacion, Contacto:lead.contacto,
+        Consulta:lead.consulta, Preguntas_vistas:vistas.join(' | ')||'—'
+      })
+    }).then(r=>r.json()).then(r=>{
+      estado.textContent = (r.success==='true'||r.success===true)
+        ? '¡Listo, '+lead.nombre+'! Recibí tus datos por correo y te contactaré pronto.'
+        : 'No pude enviar el correo, pero puedes mandarme tus datos por WhatsApp.';
+      ofrecerWhatsApp();
+    }).catch(()=>{
+      estado.textContent='No pude enviar el correo, pero puedes mandarme tus datos por WhatsApp.';
+      ofrecerWhatsApp();
+    });
+  }
+  function ofrecerWhatsApp(){
+    msg('Si quieres una respuesta más rápida, envíame el resumen por WhatsApp:');
+    const a=document.createElement('a'); a.className='cb-wa'; a.target='_blank'; a.rel='noopener';
+    a.href='https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(resumen());
+    a.textContent='Enviar por WhatsApp';
+    const w=document.createElement('div'); w.appendChild(a); log.appendChild(w); log.scrollTop=log.scrollHeight;
+    chips([['Ver otras preguntas', menu]]);
+  }
+ 
+  // ===== Eventos =====
+  $('cb-form').onsubmit = e => {
+    e.preventDefault();
+    const t = input.value.trim(); if(!t) return;
+    msg(t,'user'); input.value='';
+    if(modo==='lead'){ siguientePaso(t); return; }
+    if(/contact|whats|llam|hablar|asesor humano|contratar|quiero la/i.test(norm(t))){ iniciarLead(); return; }
+    const f = buscar(t);
+    if(f) responder(f);
+    else setTimeout(()=>{ msg('No tengo esa respuesta, pero te puedo poner en contacto con Andree.'); chips([['Quiero que me contacten', iniciarLead, true],['Ver preguntas frecuentes', menu]]); },250);
+  };
+  function abrir(open){
+    $('cb').classList.toggle('open', open);
+    $('cb-btn').setAttribute('aria-expanded', open);
+    if(open && !iniciado){ iniciado=true; msg('Hola 👋 Soy el asistente de Soluciones IA Andree. Elige una pregunta o escríbeme la tuya.'); menu(); }
+    if(open) input.focus();
+  }
+  $('cb-btn').onclick = () => abrir(!$('cb').classList.contains('open'));
+  $('cb-close').onclick = () => { abrir(false); $('cb-btn').focus(); };
+  document.addEventListener('keydown', e => { if(e.key==='Escape' && $('cb').classList.contains('open')) abrir(false); });
+})();
+</script>
+<!-- ================= FIN CHATBOT ================= -->
+ 
 </body>
 </html>
